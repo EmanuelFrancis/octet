@@ -40,12 +40,8 @@ namespace octet {
       enabled = true;
     }
 
-	float getxposition() {
-		return modelToWorld[3][0];	
-	}
-
-	float getyposition() {
-		return modelToWorld[3][1];
+	vec2 getxy() {
+		return modelToWorld.row(3).xy();
 	}
 
     void init(int _texture, float x, float y, float w, float h) {
@@ -232,7 +228,6 @@ namespace octet {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
-	  sprites[explosion_sprite].translate(-20, 0);
 
       live_invaderers--;
       score++;
@@ -332,6 +327,7 @@ namespace octet {
             sprite &invaderer = sprites[first_invaderer_sprite+j];
             if (invaderer.is_enabled() && missile.collides_with(invaderer)) {
               invaderer.is_enabled() = false;
+			  sprites[explosion_sprite].translate(1000 + invaderer.getxy().x(), 1000 + invaderer.getxy().y());
               invaderer.translate(20, 0);
               missile.is_enabled() = false;
 
