@@ -40,6 +40,14 @@ namespace octet {
       enabled = true;
     }
 
+	float getxposition() {
+		return modelToWorld[3][0];	
+	}
+
+	float getyposition() {
+		return modelToWorld[3][1];
+	}
+
     void init(int _texture, float x, float y, float w, float h) {
       modelToWorld.loadIdentity();
       modelToWorld.translate(x, y, 0);
@@ -170,6 +178,8 @@ namespace octet {
       first_border_sprite,
       last_border_sprite = first_border_sprite + num_borders - 1,
 
+   	  explosion_sprite,
+
       num_sprites,
 
     };
@@ -222,7 +232,8 @@ namespace octet {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
-	
+	  sprites[explosion_sprite].translate(-20, 0);
+
       live_invaderers--;
       score++;
       if (live_invaderers == 4) {
@@ -323,6 +334,7 @@ namespace octet {
               invaderer.is_enabled() = false;
               invaderer.translate(20, 0);
               missile.is_enabled() = false;
+
               missile.translate(20, 0);
               on_hit_invaderer();
 
@@ -435,6 +447,9 @@ namespace octet {
 
       GLuint ship = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/ship.gif");
       sprites[ship_sprite].init(ship, 0, -2.75f, 0.25f, 0.25f);
+
+	  GLuint explosion = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/explosion.gif");
+	  sprites[explosion_sprite].init(explosion, -1000, -1000, 0.25f, 0.25f);
 
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
