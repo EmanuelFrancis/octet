@@ -16,6 +16,7 @@
 //   Texture loaded from GIF file
 //   Audio
 //
+#include <conio.h>
 
 namespace octet {
   class sprite {
@@ -208,12 +209,20 @@ namespace octet {
 
     ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
+	
+	void clear_screen() {                           	//Actually, this func does not clear,
+		COORD coord = { 0 };                                //it just set the cursor at the
+		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);    // top left corner of the screen
+		SetConsoleCursorPosition(h, coord);
+	}
+
+
     // called when we hit an enemy
     void on_hit_invaderer() {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
-
+	
       live_invaderers--;
       score++;
       if (live_invaderers == 4) {
@@ -480,9 +489,13 @@ namespace octet {
     }
 
     // called every frame to move things
+	
     void simulate() {
       if (game_over) {
-        return;
+
+
+		  return;
+	  
       }
 
       move_ship();
