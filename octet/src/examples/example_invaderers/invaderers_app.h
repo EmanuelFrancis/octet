@@ -318,7 +318,17 @@ namespace octet {
 
     // animate the missiles
     void move_missiles() {
+		static int count = 0;
+		static bool active = false;
       const float missile_speed = 0.3f;
+	  if (active) {
+		  count++;
+	  }
+	  if (count >= 5 && active) {
+			  sprites[explosion_sprite].translate(50, 50);
+			  active = false;
+			  count = 0;
+		  }
       for (int i = 0; i != num_missiles; ++i) {
         sprite &missile = sprites[first_missile_sprite+i];
         if (missile.is_enabled()) {
@@ -327,7 +337,10 @@ namespace octet {
             sprite &invaderer = sprites[first_invaderer_sprite+j];
             if (invaderer.is_enabled() && missile.collides_with(invaderer)) {
               invaderer.is_enabled() = false;
-			  sprites[explosion_sprite].translate(1000 + invaderer.getxy().x(), 1000 + invaderer.getxy().y());
+			  sprites[explosion_sprite].set_relative(invaderer, 0, 0);
+			  active = true;
+
+
               invaderer.translate(20, 0);
               missile.is_enabled() = false;
 
