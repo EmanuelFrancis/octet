@@ -222,6 +222,13 @@ namespace octet {
 	  // information for our text
 	  bitmap_font font;
 
+	  // missile power ups
+	  int powerup_sprite_no = 0;
+	  GLint powerup_texture[3] = {};
+
+	  // missile x and y trajectorys
+	  int missile_y = 5;
+	  int missile_x = 5;
 
 	  ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
@@ -232,7 +239,7 @@ namespace octet {
 		  SetConsoleCursorPosition(h, coord);
 	  }
 
-	  // Swap missile sprite to bomb sprite
+/*	  // Swap missile sprite to bomb sprite
 	  void power_up() {
 		  // use the power up texture
 		  GLuint first_powerup = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/powerup_01.gif");
@@ -240,29 +247,24 @@ namespace octet {
 			  // create missiles off-screen
 			  sprites[first_missile_sprite + i].swap_texture(first_powerup);
 		  }
-
 	  }
-
-/*
-	  int ship_state[3] = {
-
-		 ship_state[0] = 0;
-		 ship_state[1] = first_powerup;
-		 ship_state[2] = second_powerup;
-	  };
 	  
-
+	  // Ship power up classes
+	  int ship_power_up[2] = {};
+	  int powerup_counter = 0;
 	  void power() {
-	      int ship_state = 0;
 		  int evolve = 45;
-		  for (int i = live_invaderers; live_invaderers == evolve; evolve-6 ) {
-		  ++ship_state;
-	      }
+		  if (live_invaderers == evolve) {
+		//	  evolve - 6;
+			  ++powerup_counter;
+		  }
 	  }
- */
+	  ship_power_up[powerup_counter] = 0;
+	  ship_power_up[powerup_counter] = first_powerup;
+*/
 
     // called when we hit an enemy
-    void on_hit_invaderer() {
+      void on_hit_invaderer() {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
@@ -270,9 +272,27 @@ namespace octet {
       live_invaderers--;
       score++;
 
-	  if (live_invaderers < 45) {
-		  power_up();
-	  } 
+	  GLuint second_powerup = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/powerup_02.gif");
+	  GLuint first_powerup = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/powerup_01.gif");
+	  for (int i = 0; i != num_missiles; ++i) {
+		// create missiles off-screen
+		//  sprites[first_missile_sprite + i].swap_texture(first_powerup);
+		  if (live_invaderers == 45) {
+			    ++powerup_sprite_no;
+				 sprites[first_missile_sprite + i].swap_texture(powerup_texture[1]);
+		  }
+		  else if (live_invaderers == 35) {
+			  ++powerup_sprite_no;
+			  sprites[first_missile_sprite + i].swap_texture(powerup_texture[2]);
+		  }
+	  }
+	  powerup_texture[0] = 0;
+	  powerup_texture[1] = first_powerup;
+	  powerup_texture[2] = second_powerup;
+
+//	  if (live_invaderers < 45) {
+//		  power_up();
+//	  } 
 	  if (live_invaderers == 4) {
 		  invader_velocity *= 4;
       } else if (live_invaderers == 0) {
@@ -395,7 +415,7 @@ namespace octet {
           }
           if (missile.collides_with(sprites[first_border_sprite+1])) {
             missile.is_enabled() = false;
-            missile.translate(20, 0);
+            missile.translate(missile_y, missile_x);
           }
         }
       next_missile:;
@@ -540,6 +560,8 @@ namespace octet {
 		  sprites[first_missile_sprite + i].init(missile, 20, 0, 0.0625f, 0.25f);
 		  sprites[first_missile_sprite + i].is_enabled() = false;
 	  }
+
+
 
 
 	  
