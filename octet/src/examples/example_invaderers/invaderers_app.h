@@ -111,6 +111,13 @@ namespace octet {
       modelToWorld.translate(x, y, 0);
     }
 
+	//rotate attempt!
+	void rotateZ(float angle) {
+		modelToWorld.rotateZ(angle);
+	}
+
+
+
     // position the object relative to another.
     void set_relative(sprite &rhs, float x, float y) {
       modelToWorld = rhs.modelToWorld;
@@ -229,6 +236,7 @@ namespace octet {
 	  // missile x and y trajectorys
 	  int missile_y = 5;
 	  int missile_x = 5;
+
 
 	  ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
@@ -378,11 +386,14 @@ namespace octet {
       }
     }
 
+
+
     // animate the missiles
     void move_missiles() {                //Function name
 	    static int count = 0;             // set counter for frame counting 
+		const float xangle = 0;
 		static bool active = false;       // set an on/off explosion frame counting switch
-      const float missile_speed = 0.3f;   // set missile speed
+      const float missile_speed = 0.2;   // set missile speed
 
 	  if (active) {                       // if explosion frame counting switch is on
 		  count++;                        // +1 to counter
@@ -395,7 +406,9 @@ namespace octet {
       for (int i = 0; i != num_missiles; ++i) {               
         sprite &missile = sprites[first_missile_sprite+i];
         if (missile.is_enabled()) {
-          missile.translate(0, missile_speed);
+          missile.translate(xangle, missile_speed);
+		  missile.rotateZ(4);
+
           for (int j = 0; j != num_invaderers; ++j) {
             sprite &invaderer = sprites[first_invaderer_sprite+j];
             if (invaderer.is_enabled() && missile.collides_with(invaderer)) {     // if invaderer is alive and missile collides
@@ -413,9 +426,9 @@ namespace octet {
               goto next_missile;
             }
           }
-          if (missile.collides_with(sprites[first_border_sprite+1])) {
+          if (missile.collides_with(sprites[first_border_sprite+1]) || missile.collides_with(sprites[first_border_sprite + 2])) {
             missile.is_enabled() = false;
-            missile.translate(missile_y, missile_x);
+            missile.translate(20, 0);
           }
         }
       next_missile:;
