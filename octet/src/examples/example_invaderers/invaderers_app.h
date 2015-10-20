@@ -237,6 +237,8 @@ namespace octet {
 	  int missile_y = 5;
 	  int missile_x = 5;
 
+	  float missile_trajectory_angle = 0;
+	  float missile_rotation = 0;
 
 	  ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
@@ -292,6 +294,8 @@ namespace octet {
 		  else if (live_invaderers == 35) {
 			  ++powerup_sprite_no;
 			  sprites[first_missile_sprite + i].swap_texture(powerup_texture[2]);
+			  missile_trajectory_angle = 0.02;
+			  missile_rotation = 1;
 		  }
 	  }
 	  powerup_texture[0] = 0;
@@ -340,19 +344,19 @@ namespace octet {
 
     // fire button (space)
     void fire_missiles() {
-      if (missiles_disabled) {
-        --missiles_disabled;
-      } else if (is_key_going_down(' ')) {
-        // find a missile
-        for (int i = 0; i != num_missiles; ++i) {
-          if (!sprites[first_missile_sprite+i].is_enabled()) {
-            sprites[first_missile_sprite+i].set_relative(sprites[ship_sprite], 0, 0.5f);
-            sprites[first_missile_sprite+i].is_enabled() = true;
-            missiles_disabled = 5;
-            ALuint source = get_sound_source();
-            alSourcei(source, AL_BUFFER, whoosh);
-            alSourcePlay(source);
-            break;
+      if (missiles_disabled) {                        // if missiles are available (if missiles_disabled has a value above 0) 
+        --missiles_disabled;						  // reset them to 0 (take them all away)
+      } else if (is_key_going_down(' ')) {			  // otherwise if space is hit (shot fired)
+        // find a missile								// then...
+        for (int i = 0; i != num_missiles; ++i) {		// when the counter has not yet add up to the number of missiles allowed
+          if (!sprites[first_missile_sprite+i].is_enabled()) {							   // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
+            sprites[first_missile_sprite+i].set_relative(sprites[ship_sprite], 0, 0.5f);   // move missile sprite relative to ship (still invisible)
+            sprites[first_missile_sprite+i].is_enabled() = true;							// make the first missile sprite visible
+            missiles_disabled = 5;															// make 5 available missiles
+            ALuint source = get_sound_source();												// go through the array of sound sources
+            alSourcei(source, AL_BUFFER, whoosh);											// find the whoosh sound
+            alSourcePlay(source);															// play the found sound
+            break;																			// stop when finished
           }
         }
       }
@@ -391,7 +395,7 @@ namespace octet {
     // animate the missiles
     void move_missiles() {                //Function name
 	    static int count = 0;             // set counter for frame counting 
-		const float xangle = 0;
+		const float xangle = missile_trajectory_angle;
 		static bool active = false;       // set an on/off explosion frame counting switch
       const float missile_speed = 0.2;   // set missile speed
 
@@ -407,7 +411,7 @@ namespace octet {
         sprite &missile = sprites[first_missile_sprite+i];
         if (missile.is_enabled()) {
           missile.translate(xangle, missile_speed);
-		  missile.rotateZ(4);
+		  missile.rotateZ(missile_rotation);
 
           for (int j = 0; j != num_invaderers; ++j) {
             sprite &invaderer = sprites[first_invaderer_sprite+j];
@@ -567,11 +571,11 @@ namespace octet {
       }
 
 	  // use the missile texture
-	  GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
-	  for (int i = 0; i != num_missiles; ++i) {
+	  GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");        // create missile sprite from texture library and name it missile
+	  for (int i = 0; i != num_missiles; ++i) {																// if th counter does not equal the amount of allowed missiles	
 		  // create missiles off-screen
-		  sprites[first_missile_sprite + i].init(missile, 20, 0, 0.0625f, 0.25f);
-		  sprites[first_missile_sprite + i].is_enabled() = false;
+		  sprites[first_missile_sprite + i].init(missile, 20, 0, 0.0625f, 0.25f);							// load the missile into the game off screen
+		  sprites[first_missile_sprite + i].is_enabled() = false;											// set is as invisible (disabled) by default
 	  }
 
 
