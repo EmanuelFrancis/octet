@@ -163,7 +163,7 @@ namespace octet {
 		  num_sound_sources = 8,
 		  num_rows = 5,
 		  num_cols = 10,
-		  num_missiles = 2,
+		  num_missiles = 6,
 		  num_bombs = 2,
 		  num_borders = 4,
 		  num_invaderers = num_rows * num_cols,
@@ -240,6 +240,8 @@ namespace octet {
 	  float missile_trajectory_angle = 0;
 	  float missile_rotation = 0;
 
+	  bool double_missiles = false;
+
 	  ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
 
@@ -296,6 +298,9 @@ namespace octet {
 			  sprites[first_missile_sprite + i].swap_texture(powerup_texture[2]);
 			  missile_trajectory_angle = 0.02;
 			  missile_rotation = 1;
+			  double_missiles = true;
+			  
+		//	  fire_missiles();
 		  }
 	  }
 	  powerup_texture[0] = 0;
@@ -346,7 +351,11 @@ namespace octet {
     void fire_missiles() {
       if (missiles_disabled) {                        // if missiles are available (if missiles_disabled has a value above 0) 
         --missiles_disabled;						  // reset them to 0 (take them all away)
-      } else if (is_key_going_down(' ')) {			  // otherwise if space is hit (shot fired)
+	  }
+	  else 
+		  if (is_key_going_down(' ')) {			  // otherwise if space is hit (shot fired)
+
+	  
         // find a missile								// then...
         for (int i = 0; i != num_missiles; ++i) {		// when the counter has not yet add up to the number of missiles allowed
           if (!sprites[first_missile_sprite+i].is_enabled()) {							   // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
@@ -359,6 +368,21 @@ namespace octet {
             break;																			// stop when finished
           }
         }
+
+		if (double_missiles == true) {
+			for (int i = 0; i != num_missiles; ++i) {		// when the counter has not yet add up to the number of missiles allowed
+  				if (!sprites[first_missile_sprite + i].is_enabled()) {							   // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
+					sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0.5f, 0.5f);   // move missile sprite relative to ship (still invisible)
+					sprites[first_missile_sprite + i].is_enabled() = true;							// make the first missile sprite visible
+					missiles_disabled = 5;															// make 5 available missiles
+					ALuint source = get_sound_source();												// go through the array of sound sources
+					alSourcei(source, AL_BUFFER, whoosh);											// find the whoosh sound
+					alSourcePlay(source);															// play the found sound
+					break;																			// stop when finished
+				}
+			}
+		}
+
       }
     }
 
