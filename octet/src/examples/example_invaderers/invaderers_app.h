@@ -34,6 +34,9 @@ namespace octet {
     // true if this sprite is enabled.
     bool enabled;
   public:
+
+	  float angle = 0;
+
     sprite() {
       texture = 0;
       enabled = true;
@@ -161,19 +164,19 @@ namespace octet {
 
 	  enum {
 		  num_sound_sources = 8,
-		  num_rows = 5,
-		  num_cols = 10,
+//		  num_rows = 5,
+//		  num_cols = 10,
 		  num_missiles = 6,
 		  num_bombs = 2,
 		  num_borders = 4,
-		  num_invaderers = num_rows * num_cols,
+//		  num_invaderers = num_rows * num_cols,
 
 		  // sprite definitions
 		  ship_sprite = 0,
 		  game_over_sprite,
 
-		  first_invaderer_sprite,
-		  last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
+//		  first_invaderer_sprite,
+//		  last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
 
 		  first_missile_sprite,
 		  last_missile_sprite = first_missile_sprite + num_missiles - 1,
@@ -219,6 +222,7 @@ namespace octet {
 
 	  // big array of sprites
 	  sprite sprites[num_sprites];
+	  dynarray<sprite> inv_sprites;
 
 	  // random number generator
 	  class random randomizer;
@@ -228,6 +232,18 @@ namespace octet {
 
 	  // information for our text
 	  bitmap_font font;
+
+	  // stores current level
+	  int current_level = 0;
+	  static const int MAX_NR_LVL = 2;
+
+	  // invanderer position
+	  struct inv_position {
+		  int x;
+		  int y;
+	  };
+
+	  dynarray<inv_position> inv_formation;
 
 	  // missile power ups
 	  int powerup_sprite_no = 0;
@@ -353,14 +369,15 @@ namespace octet {
         --missiles_disabled;						  // reset them to 0 (take them all away)
 	  }
 	  else 
-		  if (is_key_going_down(' ')) {			  // otherwise if space is hit (shot fired)
+		  if (is_key_going_down(' ')) {			      // otherwise if space is hit (shot fired)
 
 	  
-        // find a missile								// then...
-        for (int i = 0; i != num_missiles; ++i) {		// when the counter has not yet add up to the number of missiles allowed
+        // find a missile								                                   
+        for (int i = 0; i != num_missiles; ++i) {		                                   // when the counter has not yet add up to the number of missiles allowed
           if (!sprites[first_missile_sprite+i].is_enabled()) {							   // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
             sprites[first_missile_sprite+i].set_relative(sprites[ship_sprite], 0, 0.5f);   // move missile sprite relative to ship (still invisible)
-            sprites[first_missile_sprite+i].is_enabled() = true;							// make the first missile sprite visible
+            sprites[first_missile_sprite+i].is_enabled() = true;
+			sprites[first_missile_sprite + i].angle = 1;                                    // make the first missile sprite visible
             missiles_disabled = 5;															// make 5 available missiles
             ALuint source = get_sound_source();												// go through the array of sound sources
             alSourcei(source, AL_BUFFER, whoosh);											// find the whoosh sound
@@ -370,15 +387,17 @@ namespace octet {
         }
 
 		if (double_missiles == true) {
-			for (int i = 0; i != num_missiles; ++i) {		// when the counter has not yet add up to the number of missiles allowed
-  				if (!sprites[first_missile_sprite + i].is_enabled()) {							   // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
+			for (int i = 0; i != num_missiles; ++i) {		                                            // when the counter has not yet add up to the number of missiles allowed
+  				if (!sprites[first_missile_sprite + i].is_enabled()) {							        // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
 					sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0.5f, 0.5f);   // move missile sprite relative to ship (still invisible)
-					sprites[first_missile_sprite + i].is_enabled() = true;							// make the first missile sprite visible
-					missiles_disabled = 5;															// make 5 available missiles
-					ALuint source = get_sound_source();												// go through the array of sound sources
-					alSourcei(source, AL_BUFFER, whoosh);											// find the whoosh sound
-					alSourcePlay(source);															// play the found sound
-					break;																			// stop when finished
+					sprites[first_missile_sprite + i].is_enabled() = true;
+					sprites[first_missile_sprite + i].angle = -1;                                       // make the first missile sprite visible
+					missiles_disabled = 5;															    // make 5 available missiles
+
+					ALuint source = get_sound_source();												    // go through the array of sound sources
+					alSourcei(source, AL_BUFFER, whoosh);											    // find the whoosh sound
+					alSourcePlay(source);															    // play the found sound
+					break;																			    // stop when finished
 				}
 			}
 		}
@@ -393,8 +412,8 @@ namespace octet {
       } else {
         // find an invaderer
         sprite &ship = sprites[ship_sprite];
-        for (int j = randomizer.get(0, num_invaderers); j < num_invaderers; ++j) {
-          sprite &invaderer = sprites[first_invaderer_sprite+j];
+        for (int j = randomizer.get(0, inv_sprites.size()); j < inv_sprites.size(); ++j) {
+          sprite &invaderer = inv_sprites[j];
           if (invaderer.is_enabled() && invaderer.is_above(ship, 0.3f)) {
             // find a bomb
             for (int i = 0; i != num_bombs; ++i) {
@@ -417,28 +436,27 @@ namespace octet {
 
 
     // animate the missiles
-    void move_missiles() {                //Function name
-	    static int count = 0;             // set counter for frame counting 
+    void move_missiles() {                                      
+	    static int count = 0;                                      // set counter for frame counting 
 		const float xangle = missile_trajectory_angle;
-		static bool active = false;       // set an on/off explosion frame counting switch
-      const float missile_speed = 0.2;   // set missile speed
+		static bool active = false;                                // set an on/off explosion frame counting switch
+      const float missile_speed = 0.2;                             // set missile speed
 
-	  if (active) {                       // if explosion frame counting switch is on
-		  count++;                        // +1 to counter
+	  if (active) {                                                // if explosion frame counting switch is on
+		  count++;                                                 // +1 to counter
 	  }
-	  if (count >= 5 && active) {                            // if 5 frames have passed and explosion frame counting switch is (true?)
-			  sprites[explosion_sprite].translate(50, 50);   // move explosion sprite off screen
-			  active = false;                                // turn off explosion frame counting switch
-			  count = 0;                                     // reset counter to 0
+	  if (count >= 5 && active) {                                  // if 5 frames have passed and explosion frame counting switch is (true?)
+			  sprites[explosion_sprite].translate(50, 50);         // move explosion sprite off screen
+			  active = false;                                      // turn off explosion frame counting switch
+			  count = 0;                                           // reset counter to 0
 		  }
-      for (int i = 0; i != num_missiles; ++i) {               
-        sprite &missile = sprites[first_missile_sprite+i];
-        if (missile.is_enabled()) {
-          missile.translate(xangle, missile_speed);
-		  missile.rotateZ(missile_rotation);
-
-          for (int j = 0; j != num_invaderers; ++j) {
-            sprite &invaderer = sprites[first_invaderer_sprite+j];
+      for (int i = 0; i != num_missiles; ++i) {					                  // if we have not reached the missile limit     
+        sprite &missile = sprites[first_missile_sprite+i];		                  // define a sprite object and assign the missile sprite to it
+        if (missile.is_enabled()) {								                  // if missile object is enabled
+          missile.translate(xangle, missile_speed);				                  // move the missile in the angle defined by xangle, and to the speed defined by missile_speed
+		  missile.rotateZ(sprites[first_missile_sprite + i].angle);				  // with the rotation in the z defined by missile_rotation
+          for (int j = 0; j != inv_sprites.size(); ++j) {				              //when there are still invaderers enabled
+            sprite &invaderer = inv_sprites[j];		          // define a sprite object and assign the invaderers sprite to it 
             if (invaderer.is_enabled() && missile.collides_with(invaderer)) {     // if invaderer is alive and missile collides
               invaderer.is_enabled() = false;                                     // turn off / kill invaderer
 			  sprites[explosion_sprite].set_relative(invaderer, 0, 0);            // move explosion sprite relative to invaderer
@@ -454,7 +472,8 @@ namespace octet {
               goto next_missile;
             }
           }
-          if (missile.collides_with(sprites[first_border_sprite+1]) || missile.collides_with(sprites[first_border_sprite + 2])) {
+
+          if (missile.collides_with(sprites[first_border_sprite+1]) || missile.collides_with(sprites[first_border_sprite + 2]) || missile.collides_with(sprites[first_border_sprite + 3])) {
             missile.is_enabled() = false;
             missile.translate(20, 0);
           }
@@ -488,8 +507,8 @@ namespace octet {
 
     // move the array of enemies
     void move_invaders(float dx, float dy) {
-      for (int j = 0; j != num_invaderers; ++j) {
-        sprite &invaderer = sprites[first_invaderer_sprite+j];
+      for (int j = 0; j != inv_sprites.size(); ++j) {
+        sprite &invaderer = inv_sprites[j];
         if (invaderer.is_enabled()) {
           invaderer.translate(dx, dy);
         }
@@ -498,8 +517,8 @@ namespace octet {
 
     // check if any invaders hit the sides.
     bool invaders_collide(sprite &border) {
-      for (int j = 0; j != num_invaderers; ++j) {
-        sprite &invaderer = sprites[first_invaderer_sprite+j];
+      for (int j = 0; j != inv_sprites.size(); ++j) {
+        sprite &invaderer = inv_sprites[j];
         if (invaderer.is_enabled() && invaderer.collides_with(border)) {
           return true;
         }
@@ -567,15 +586,15 @@ namespace octet {
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
-      GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-      for (int j = 0; j != num_rows; ++j) {
-        for (int i = 0; i != num_cols; ++i) {
-          assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
-          sprites[first_invaderer_sprite + i + j*num_cols].init(
-            invaderer, ((float)i - num_cols * 0.5f) * 0.5f, 2.50f - ((float)j * 0.5f), 0.25f, 0.25f
-          );
-        }
-      }
+ //     GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+ //     for (int j = 0; j != num_rows; ++j) {
+ //       for (int i = 0; i != num_cols; ++i) {
+ //         assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
+ //         sprites[first_invaderer_sprite + i + j*num_cols].init(
+ //           invaderer, ((float)i - num_cols * 0.5f) * 0.5f, 2.50f - ((float)j * 0.5f), 0.25f, 0.25f
+ //         );
+ //       }
+ //     }
 
       // set the border to white for clarity
       GLuint white = resource_dict::get_texture_handle(GL_RGB, "#ffffff");
@@ -584,7 +603,7 @@ namespace octet {
       sprites[first_border_sprite+2].init(white, -3, 0, 0.2f, 6);
       sprites[first_border_sprite+3].init(white, 3,  0, 0.2f, 6);
 
-
+	  load_next_level();
 
       // use the bomb texture
       GLuint bomb = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/bomb.gif");
@@ -595,7 +614,7 @@ namespace octet {
       }
 
 	  // use the missile texture
-	  GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");        // create missile sprite from texture library and name it missile
+	  GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");         // create missile sprite from texture library and name it missile
 	  for (int i = 0; i != num_missiles; ++i) {																// if th counter does not equal the amount of allowed missiles	
 		  // create missiles off-screen
 		  sprites[first_missile_sprite + i].init(missile, 20, 0, 0.0625f, 0.25f);							// load the missile into the game off screen
@@ -616,7 +635,7 @@ namespace octet {
       missiles_disabled = 0;
       bombs_disabled = 50;
       invader_velocity = 0.01f;
-      live_invaderers = num_invaderers;
+      live_invaderers = inv_sprites.size();
       num_lives = 3;
       game_over = false;
       score = 0;
@@ -653,6 +672,11 @@ namespace octet {
 
     // this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
+
+		if (is_key_down(key_rmb)) {
+			load_next_level();
+		}
+
       simulate();
 
       // set a viewport - includes whole window area
@@ -669,7 +693,12 @@ namespace octet {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      // draw all the sprites
+	  // new draw sprites
+	  for (int i = 0; i < inv_sprites.size(); ++i) {
+		  inv_sprites[i].render(texture_shader_, cameraToWorld);
+	  }
+
+      // draw all andy's sprites
       for (int i = 0; i != num_sprites; ++i) {
         sprites[i].render(texture_shader_, cameraToWorld);
       }
@@ -682,5 +711,57 @@ namespace octet {
       vec4 &cpos = cameraToWorld.w();
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
     }
+
+	void read_file() {
+
+		std::ifstream file("inv_formation" + std::to_string(current_level) + ".csv");
+
+		inv_formation.resize(0);
+
+		char buffer[2048];
+		int i = 0;
+		while (!file.eof()) {
+			file.getline(buffer, sizeof(buffer));
+
+			char *b = buffer;
+			for (int j = 0;; ++j) {
+				char *e = b;
+				while (*e != 0 && *e != ',') {
+					++e;
+				}
+
+				if (std::atoi(b) == 1) {
+					inv_position p;
+					p.x = j;
+					p.y = i;
+					inv_formation.push_back(p);
+				}
+
+				if (*e != ',') {
+					break;
+				}
+				b = e +  1; 
+			}
+			++i;
+		}
+	}
+
+	void load_next_level() {
+		++current_level;
+		if (current_level > MAX_NR_LVL) {
+			return;
+		}
+
+		read_file();
+		inv_sprites.resize(0);
+
+		GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+		for (int i = 0; i < inv_formation.size(); ++i) {
+			sprite inv;
+			inv.init(invaderer, -1.5f + 0.66f*inv_formation[i].x, 2 - 0.5f*inv_formation[i].y, 0.25f, 0.25f);
+			inv_sprites.push_back(inv);
+		}
+	}
+
   };
 }
