@@ -18,96 +18,129 @@
 //
 
 namespace octet {
-  class sprite {
-    // where is our sprite (overkill for a 2D game!)
-    mat4t modelToWorld;
+	class sprite {
+		// where is our sprite (overkill for a 2D game!)
+		mat4t modelToWorld;
 
-    // half the width of the sprite
-    float halfWidth;
+		// half the width of the sprite
+		float halfWidth;
 
-    // half the height of the sprite
-    float halfHeight;
+		// half the height of the sprite
+		float halfHeight;
 
-    // what texture is on our sprite
-    int texture;
+		// what texture is on our sprite
+		int texture;
 
-    // true if this sprite is enabled.
-    bool enabled;
-  public:
+		// true if this sprite is enabled.
+		bool enabled;
+	public:
 
-	  float angle = 0;
+		float angle = 0;
 
-    sprite() {
-      texture = 0;
-      enabled = true;
-    }
+		sprite() {
+			texture = 0;
+			enabled = true;
+		}
 
-	vec2 getxy() {
-		return modelToWorld.row(3).xy();
-	}
+		vec2 getxy() {
+			return modelToWorld.row(3).xy();
+		}
 
-    void init(int _texture, float x, float y, float w, float h) {
-      modelToWorld.loadIdentity();
-      modelToWorld.translate(x, y, 0);
-      halfWidth = w * 0.5f;
-      halfHeight = h * 0.5f;
-      texture = _texture;
-      enabled = true;
-    }
+		void init(int _texture, float x, float y, float w, float h) {
+			modelToWorld.loadIdentity();
+			modelToWorld.translate(x, y, 0);
+			halfWidth = w * 0.5f;
+			halfHeight = h * 0.5f;
+			texture = _texture;
+			enabled = true;
+		}
 
-	void swap_texture(int _texture) {
-		texture = _texture;
-	}
+		void swap_texture(int _texture) {
+			texture = _texture;
+		}
 
-    void render(texture_shader &shader, mat4t &cameraToWorld) {
-      // invisible sprite... used for gameplay.
-      if (!texture) return;
+		void render(texture_shader &shader, mat4t &cameraToWorld) {
+			// invisible sprite... used for gameplay.
+			if (!texture) return;
 
-      // build a projection matrix: model -> world -> camera -> projection
-      // the projection space is the cube -1 <= x/w, y/w, z/w <= 1
-      mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
+			// build a projection matrix: model -> world -> camera -> projection
+			// the projection space is the cube -1 <= x/w, y/w, z/w <= 1
+			mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
 
-      // set up opengl to draw textured triangles using sampler 0 (GL_TEXTURE0)
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture);
+			// set up opengl to draw textured triangles using sampler 0 (GL_TEXTURE0)
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture);
 
-      // use "old skool" rendering
-      //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-      //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      shader.render(modelToProjection, 0);
+			// use "old skool" rendering
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			shader.render(modelToProjection, 0);
 
-      // this is an array of the positions of the corners of the sprite in 3D
-      // a straight "float" here means this array is being generated here at runtime.
-      float vertices[] = {
-        -halfWidth, -halfHeight, 0,
-         halfWidth, -halfHeight, 0,
-         halfWidth,  halfHeight, 0,
-        -halfWidth,  halfHeight, 0,
-      };
+			// this is an array of the positions of the corners of the sprite in 3D
+			// a straight "float" here means this array is being generated here at runtime.
+			float vertices[] = {
+			  -halfWidth, -halfHeight, 0,
+			   halfWidth, -halfHeight, 0,
+			   halfWidth,  halfHeight, 0,
+			  -halfWidth,  halfHeight, 0,
+			};
 
-      // attribute_pos (=0) is position of each corner
-      // each corner has 3 floats (x, y, z)
-      // there is no gap between the 3 floats and hence the stride is 3*sizeof(float)
-      glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)vertices );
-      glEnableVertexAttribArray(attribute_pos);
-    
-      // this is an array of the positions of the corners of the texture in 2D
-      static const float uvs[] = {
-         0,  0,
-         1,  0,
-         1,  1,
-         0,  1,
-      };
+			// attribute_pos (=0) is position of each corner
+			// each corner has 3 floats (x, y, z)
+			// there is no gap between the 3 floats and hence the stride is 3*sizeof(float)
+			glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)vertices);
+			glEnableVertexAttribArray(attribute_pos);
 
-      // attribute_uv is position in the texture of each corner
-      // each corner (vertex) has 2 floats (x, y)
-      // there is no gap between the 2 floats and hence the stride is 2*sizeof(float)
-      glVertexAttribPointer(attribute_uv, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)uvs );
-      glEnableVertexAttribArray(attribute_uv);
-    
-      // finally, draw the sprite (4 vertices)
-      glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    }
+			// this is an array of the positions of the corners of the texture in 2D
+			static const float uvs[] = {
+			   0,  0,
+			   1,  0,
+			   1,  1,
+			   0,  1,
+			};
+
+			// attribute_uv is position in the texture of each corner
+			// each corner (vertex) has 2 floats (x, y)
+			// there is no gap between the 2 floats and hence the stride is 2*sizeof(float)
+			glVertexAttribPointer(attribute_uv, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)uvs);
+			glEnableVertexAttribArray(attribute_uv);
+
+			// finally, draw the sprite (4 vertices)
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		}
+	
+		//Use Emanuel Shader
+		void render(emanuel_shader &shader, mat4t &cameraToWorld, int v_width, int v_height) {
+			mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
+
+			shader.render(modelToProjection, vec2(v_width, v_height));
+
+			float vertices[] = {
+				-halfWidth, -halfHeight, 0,
+				halfWidth, -halfHeight, 0,
+				halfWidth, halfHeight, 0,
+				-halfWidth, halfHeight,0,
+
+			};
+
+			glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)vertices);
+			glEnableVertexAttribArray(attribute_pos);
+
+			static const float uvs[] = {
+				0, 0,
+				1, 0,
+				1, 1,
+				0, 1,
+			};
+
+			glVertexAttribPointer(attribute_uv, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)uvs);
+			glEnableVertexAttribArray(attribute_uv);
+
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		}
+
+	
+
 
     // move the object
     void translate(float x, float y) {
@@ -161,6 +194,7 @@ namespace octet {
 
 	  // shader to draw a textured triangle
 	  texture_shader texture_shader_;
+	  emanuel_shader emanuel_shader_;
 
 	  enum {
 		  num_sound_sources = 8,
@@ -224,6 +258,7 @@ namespace octet {
 	  // big array of sprites
 	  sprite sprites[num_sprites];
 	  dynarray<sprite> inv_sprites;
+	  sprite background_sprite;
 
 	  // random number generator
 	  class random randomizer;
@@ -301,7 +336,7 @@ namespace octet {
 			  }
 			  if (powerup_sprite_no == 2) {
 				  sprites[first_missile_sprite + i].swap_texture(powerup_texture[2]);
-				  missile_trajectory_angle = 0.02;
+				  missile_trajectory_angle = 0.02f;
 				  missile_rotation = 1;
 				  double_missiles = true;
 			  }
@@ -321,17 +356,21 @@ namespace octet {
 
 	  if (live_invaderers == 4) {
 		  invader_velocity *= 4;
-      } else if (live_invaderers == 0) {
-        game_over = true;
-        sprites[game_over_sprite].translate(-20, 0);
       }
+	  else if (live_invaderers == 0 && current_level < MAX_NR_LVL) {
+		  load_next_level();
+	  }
+//	  else if (live_invaderers == 0 && current_level == 2) {
+//			  game_over = true;
+//			  sprites[game_over_sprite].translate(-20, 0);
+//		  }	  
     }
 
     // called when we are hit
     void on_hit_ship() {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
-      alSourcePlay(source);
+      alSourcePlay(source); 
 
 	  if (powerup_sprite_no != 0) {
 		  --powerup_sprite_no;
@@ -589,6 +628,7 @@ namespace octet {
     void app_init() {
       // set up the shader
       texture_shader_.init();
+	  emanuel_shader_.init();
 
       // set up the matrices with a camera 5 units from the origin
       cameraToWorld.loadIdentity();
@@ -621,6 +661,7 @@ namespace octet {
       sprites[first_border_sprite+1].init(white, 0,  3, 6, 0.2f);
       sprites[first_border_sprite+2].init(white, -3, 0, 0.2f, 6);
       sprites[first_border_sprite+3].init(white, 3,  0, 0.2f, 6);
+	  background_sprite.init(white, 0, 0, 6, 6);
 
 	  load_next_level();
 
@@ -665,8 +706,9 @@ namespace octet {
     // called every frame to move things
 	
     void simulate() {
-      if (game_over) {
 
+
+      if (game_over) {
 
 		  return;
 	  
@@ -715,6 +757,9 @@ namespace octet {
       // allow alpha blend (transparency when alpha channel is 0)
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	  // draw background
+	  background_sprite.render(emanuel_shader_, cameraToWorld, w, h);
 
 	  // new draw sprites
 	  for (int i = 0; i < inv_sprites.size(); ++i) {
@@ -772,8 +817,8 @@ namespace octet {
 	void load_next_level() {
 		++current_level;
 		if (current_level > MAX_NR_LVL) {
-			return;
-		}
+		return;
+	}
 
 		read_file();
 		inv_sprites.resize(0);
