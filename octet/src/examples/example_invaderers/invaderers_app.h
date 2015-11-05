@@ -357,13 +357,11 @@ namespace octet {
 	  if (live_invaderers == 4) {
 		  invader_velocity *= 4;
       }
-	  else if (live_invaderers == 0 && current_level < MAX_NR_LVL) {
+	  else if (live_invaderers == 0 && current_level <= MAX_NR_LVL) {
 		  load_next_level();
-	  }
-//	  else if (live_invaderers == 0 && current_level == 2) {
-//			  game_over = true;
-//			  sprites[game_over_sprite].translate(-20, 0);
-//		  }	  
+		  printf("%d\n", live_invaderers);
+		  printf("%d\n", current_level);
+	  } 
     }
 
     // called when we are hit
@@ -536,6 +534,7 @@ namespace octet {
             missile.translate(20, 0);
           }
         }
+
       next_missile:;
       }
     }
@@ -636,6 +635,7 @@ namespace octet {
 
       font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
 
+
       GLuint ship = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/ship.gif");
       sprites[ship_sprite].init(ship, 0, -2.75f, 0.25f, 0.25f);
 
@@ -662,8 +662,10 @@ namespace octet {
       sprites[first_border_sprite+2].init(white, -3, 0, 0.2f, 6);
       sprites[first_border_sprite+3].init(white, 3,  0, 0.2f, 6);
 	  background_sprite.init(white, 0, 0, 6, 6);
+	
 
-	  load_next_level();
+
+
 
       // use the bomb texture
       GLuint bomb = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/bomb.gif");
@@ -684,7 +686,8 @@ namespace octet {
 	  }
 
 
-
+	  load_next_level();
+	  printf("%d\n", current_level);
 	  
       // sounds
       whoosh = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/whoosh.wav");
@@ -709,7 +712,7 @@ namespace octet {
 
 
       if (game_over) {
-
+		  sprites[game_over_sprite].translate(-20, 0);
 		  return;
 	  
       }
@@ -733,6 +736,8 @@ namespace octet {
         invader_velocity = -invader_velocity;
         move_invaders(invader_velocity, -0.1f);
       }
+
+
     }
 
     // this is called to draw the world
@@ -780,6 +785,7 @@ namespace octet {
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
     }
 
+	// read .csv file
 	void read_file() {
 
 		std::ifstream file("inv_formation" + std::to_string(current_level) + ".csv");
@@ -814,14 +820,20 @@ namespace octet {
 		}
 	}
 
+	// load next level
 	void load_next_level() {
 		++current_level;
+		live_invaderers = inv_sprites.size();
+
 		if (current_level > MAX_NR_LVL) {
-		return;
+		game_over = true;
+
 	}
 
+		// display invaderer formation
 		read_file();
 		inv_sprites.resize(0);
+
 
 		GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
 		for (int i = 0; i < inv_formation.size(); ++i) {
