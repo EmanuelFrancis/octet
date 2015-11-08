@@ -198,19 +198,13 @@ namespace octet {
 
 	  enum {
 		  num_sound_sources = 8,
-//		  num_rows = 5,
-//		  num_cols = 10,
 		  num_missiles = 6,
 		  num_bombs = 2,
 		  num_borders = 4,
-//		  num_invaderers = num_rows * num_cols,
 
 		  // sprite definitions
 		  ship_sprite = 0,
 		  game_over_sprite,
-
-//		  first_invaderer_sprite,
-//		  last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
 
 		  first_missile_sprite,
 		  last_missile_sprite = first_missile_sprite + num_missiles - 1,
@@ -226,11 +220,6 @@ namespace octet {
 		  powerup01_sprite,
 
 		  num_sprites,
-
-
-
-
-
 	  };
 
 	  // timers for missiles and bombs
@@ -283,7 +272,8 @@ namespace octet {
 
 	  // missile power ups
 	  int powerup_sprite_no = 0;
-	  GLint powerup_texture[3] = {};
+	  GLint powerup_texture[3] = {
+	  };
 
 	  // missile x and y trajectorys
 	  int missile_y = 5;
@@ -357,10 +347,12 @@ namespace octet {
 	  if (live_invaderers == 4) {
 		  invader_velocity *= 4;
       }
-	  else if (live_invaderers == 0 && current_level <= MAX_NR_LVL) {
+	  if (live_invaderers == 0 && current_level <= MAX_NR_LVL) {
 		  load_next_level();
 		  printf("%d\n", live_invaderers);
 		  printf("%d\n", current_level);
+
+
 	  } 
     }
 
@@ -385,7 +377,6 @@ namespace octet {
         game_over = true;
         sprites[game_over_sprite].translate(-20, 0);
       }
-
 
     }
 
@@ -490,13 +481,12 @@ namespace octet {
     }
 
 
-
     // animate the missiles
     void move_missiles() {                                      
 	    static int count = 0;                                      // set counter for frame counting 
 		const float xangle = missile_trajectory_angle;
 		static bool active = false;                                // set an on/off explosion frame counting switch
-      const float missile_speed = 0.2;                             // set missile speed
+        const float missile_speed = 0.2;                           // set missile speed
 
 	  if (active) {                                                // if explosion frame counting switch is on
 		  count++;                                                 // +1 to counter
@@ -517,7 +507,6 @@ namespace octet {
               invaderer.is_enabled() = false;                                     // turn off / kill invaderer
 			  sprites[explosion_sprite].set_relative(invaderer, 0, 0);            // move explosion sprite relative to invaderer
 			  active = true;                                                      // turn on explosion frame counting switch
-
 
               invaderer.translate(20, 0);
               missile.is_enabled() = false;
@@ -645,15 +634,6 @@ namespace octet {
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
- //     GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
- //     for (int j = 0; j != num_rows; ++j) {
- //       for (int i = 0; i != num_cols; ++i) {
- //         assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
- //         sprites[first_invaderer_sprite + i + j*num_cols].init(
- //           invaderer, ((float)i - num_cols * 0.5f) * 0.5f, 2.50f - ((float)j * 0.5f), 0.25f, 0.25f
- //         );
- //       }
- //     }
 
       // set the border to white for clarity
       GLuint white = resource_dict::get_texture_handle(GL_RGB, "#ffffff");
@@ -663,9 +643,6 @@ namespace octet {
       sprites[first_border_sprite+3].init(white, 3,  0, 0.2f, 6);
 	  background_sprite.init(white, 0, 0, 6, 6);
 	
-
-
-
 
       // use the bomb texture
       GLuint bomb = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/bomb.gif");
@@ -681,14 +658,13 @@ namespace octet {
 		  for (int i = 0; i != num_missiles; ++i) {																// if th counter does not equal the amount of allowed missiles	
 			  // create missiles off-screen
 			  sprites[first_missile_sprite + i].init(missile, 20, 0, 0.0625f, 0.25f);							// load the missile into the game off screen
-			  sprites[first_missile_sprite + i].is_enabled() = false;											// set is as invisible (disabled) by default
+	     	  sprites[first_missile_sprite + i].is_enabled() = false;											// set is as invisible (disabled) by default
 		  }
 	  }
 
-
 	  load_next_level();
 	  printf("%d\n", current_level);
-	  
+
       // sounds
       whoosh = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/whoosh.wav");
       bang = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/bang.wav");
@@ -704,7 +680,10 @@ namespace octet {
       game_over = false;
       score = 0;
 	  powerup_sprite_no = 0;
+
     }
+
+	
 
     // called every frame to move things
 	
@@ -712,7 +691,7 @@ namespace octet {
 
 
       if (game_over) {
-		  sprites[game_over_sprite].translate(-20, 0);
+
 		  return;
 	  
       }
@@ -745,6 +724,7 @@ namespace octet {
 
 		if (is_key_down(key_rmb)) {
 			load_next_level();
+			printf("%d\n", current_level);
 		}
 
       simulate();
@@ -822,13 +802,16 @@ namespace octet {
 
 	// load next level
 	void load_next_level() {
+
 		++current_level;
 		live_invaderers = inv_sprites.size();
+		printf("%d", current_level);
 
 		if (current_level > MAX_NR_LVL) {
-		game_over = true;
-
-	}
+			game_over = true;
+			sprites[game_over_sprite].translate(-20, 0);
+			//	return;
+		}
 
 		// display invaderer formation
 		read_file();
