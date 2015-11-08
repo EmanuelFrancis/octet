@@ -349,10 +349,6 @@ namespace octet {
       }
 	  if (live_invaderers == 0 && current_level <= MAX_NR_LVL) {
 		  load_next_level();
-		  printf("%d\n", live_invaderers);
-		  printf("%d\n", current_level);
-
-
 	  } 
     }
 
@@ -421,30 +417,30 @@ namespace octet {
         }
 
 		if (double_missiles == true) {
-			for (int i = 0; i != num_missiles; ++i) {		                                            // when the counter has not yet add up to the number of missiles allowed
-  				if (!sprites[first_missile_sprite + i].is_enabled()) {							        // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
-					sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0.5f, 0.5f);   // move missile sprite relative to ship (still invisible)
+			for (int i = 0; i != num_missiles; ++i) {		                                            
+  				if (!sprites[first_missile_sprite + i].is_enabled()) {							         
+					sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0.5f, 0.5f);   
 					sprites[first_missile_sprite + i].is_enabled() = true;
-					sprites[first_missile_sprite + i].angle = -1;                                       // make the first missile sprite visible
-					missiles_disabled = 5;															    // make 5 available missiles
+					sprites[first_missile_sprite + i].angle = -1;                                       
+					missiles_disabled = 5;															    
 
-					ALuint source = get_sound_source();												    // go through the array of sound sources
-					alSourcei(source, AL_BUFFER, whoosh);											    // find the whoosh sound
-					alSourcePlay(source);															    // play the found sound
-					break;																			    // stop when finished
+					ALuint source = get_sound_source();												    
+					alSourcei(source, AL_BUFFER, whoosh);											    
+					alSourcePlay(source);															    
+					break;																			    
 				}
 			}
 
-			for (int i = 0; i != num_missiles; ++i) {		                                   // when the counter has not yet add up to the number of missiles allowed
-				if (!sprites[first_missile_sprite + i].is_enabled()) {							   // if the first missile sprite is not visible (default set as not visible when texture is loaded) 
-					sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], -0.5f, 0.5f);   // move missile sprite relative to ship (still invisible)
+			for (int i = 0; i != num_missiles; ++i) {		                                   
+				if (!sprites[first_missile_sprite + i].is_enabled()) {							    
+					sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], -0.5f, 0.5f);   
 					sprites[first_missile_sprite + i].is_enabled() = true;
-					sprites[first_missile_sprite + i].angle = 1;                                    // make the first missile sprite visible
-					missiles_disabled = 5;															// make 5 available missiles
-					ALuint source = get_sound_source();												// go through the array of sound sources
-					alSourcei(source, AL_BUFFER, whoosh);											// find the whoosh sound
-					alSourcePlay(source);															// play the found sound
-					break;																			// stop when finished
+					sprites[first_missile_sprite + i].angle = 1;                                    
+					missiles_disabled = 5;															
+					ALuint source = get_sound_source();												
+					alSourcei(source, AL_BUFFER, whoosh);											
+					alSourcePlay(source);															
+					break;																			
 				}
 			}
 		}
@@ -663,7 +659,6 @@ namespace octet {
 	  }
 
 	  load_next_level();
-	  printf("%d\n", current_level);
 
       // sounds
       whoosh = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/whoosh.wav");
@@ -722,11 +717,6 @@ namespace octet {
     // this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
 
-		if (is_key_down(key_rmb)) {
-			load_next_level();
-			printf("%d\n", current_level);
-		}
-
       simulate();
 
       // set a viewport - includes whole window area
@@ -756,8 +746,8 @@ namespace octet {
         sprites[i].render(texture_shader_, cameraToWorld);
       }
 
-      char score_text[64];
-      sprintf(score_text, "score: %d   lives: %d   powerup: %d\n", score, num_lives, powerup_sprite_no);
+      char score_text[32];
+      sprintf(score_text, "score: %d   lives: %d", score, num_lives);
       draw_text(texture_shader_, -1.75f, 2, 1.0f/256, score_text);
 
       // move the listener with the camera
@@ -805,18 +795,14 @@ namespace octet {
 
 		++current_level;
 		live_invaderers = inv_sprites.size();
-		printf("%d", current_level);
-
 		if (current_level > MAX_NR_LVL) {
 			game_over = true;
 			sprites[game_over_sprite].translate(-20, 0);
-			//	return;
 		}
 
 		// display invaderer formation
 		read_file();
 		inv_sprites.resize(0);
-
 
 		GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
 		for (int i = 0; i < inv_formation.size(); ++i) {
@@ -825,6 +811,5 @@ namespace octet {
 			inv_sprites.push_back(inv);
 		}
 	}
-
   };
 }
