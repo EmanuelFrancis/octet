@@ -393,7 +393,7 @@ namespace octet {
       }
     }
 
-    // fire button (space)
+    // fire button (space) 
     void fire_missiles() {
       if (missiles_disabled) {                        // if missiles are available (if missiles_disabled has a value above 0) 
         --missiles_disabled;						  // reset them to 0 (take them all away)
